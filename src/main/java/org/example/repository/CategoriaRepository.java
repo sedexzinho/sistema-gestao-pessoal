@@ -8,7 +8,10 @@ import org.springframework.stereotype.Repository;
 import org.example.models.Categoria;
 
 @Repository
-public interface CategoriaRepository extends JpaRepository<Categoria,Long>{
+public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
+
     Optional<Categoria> findByNome(String nome);
 
+    // FIX: escopo por usuário
+    Optional<Categoria> findByNomeAndUsuarioCategoriaId(String nome, Long usuarioId);
 }

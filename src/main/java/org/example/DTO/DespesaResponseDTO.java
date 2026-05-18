@@ -15,6 +15,33 @@ public class DespesaResponseDTO {
     private String tipo;
     private BigDecimal valorParcela;
     private Long idUsuario;
+    private String status;
+    private Integer totalParcelas;
+    private Integer parcelaAtual;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Integer getTotalParcelas() {
+        return totalParcelas;
+    }
+
+    public void setTotalParcelas(Integer totalParcelas) {
+        this.totalParcelas = totalParcelas;
+    }
+
+    public Integer getParcelaAtual() {
+        return parcelaAtual;
+    }
+
+    public void setParcelaAtual(Integer parcelaAtual) {
+        this.parcelaAtual = parcelaAtual;
+    }
 
     public Long getId() {
         return id;

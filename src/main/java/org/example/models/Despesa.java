@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,8 +26,6 @@ public class Despesa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-
 
     @Column(name = "despe_nome")
     private String nome;
@@ -60,6 +59,9 @@ public class Despesa {
     @JoinColumn(name = "categoria_despesa", nullable = false)
     private Categoria categoria;
 
+    @Column(name = "data_ultimo_processamento", nullable = true)
+    private LocalDate dataUltimoProcessamento;
+
     @Column(name = "valor_despesa")
     private BigDecimal valorDespesa;
 
@@ -75,10 +77,20 @@ public class Despesa {
     @PrePersist
     protected void onCreate() {
         this.dataRegistro = LocalDate.now();
+        validarParcelamento();
     }
 
-    public void setIsParcelado(Boolean isParcelado) {
-        this.isParcelado = isParcelado;
+    @PreUpdate
+    protected void validarParcelamento() {
+        if (Boolean.TRUE.equals(isParcelado)) {
+            if (parcelaAtual == null || totalParcelas == null || valorParcela == null) {
+                throw new IllegalStateException(
+                        "Despesa parcelada deve ter parcelaAtual, totalParcelas e valorParcela definidos.");
+            }
+            if (parcelaAtual > totalParcelas) {
+                throw new IllegalStateException(
+                        "Parcela atual não pode ser maior que o total de parcelas.");
+            }
+        }
     }
-
 }

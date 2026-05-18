@@ -26,6 +26,7 @@ public class UserService {
 
     private UsuarioResponseDTO toUsuarioResponseDTO(User user){
         UsuarioResponseDTO dto = new UsuarioResponseDTO();
+        dto.setId(user.getId()); 
         dto.setNome(user.getNome());
         dto.setCodigo(user.getCodigo());
         dto.setSalarioMensal(user.getSalarioMensal());

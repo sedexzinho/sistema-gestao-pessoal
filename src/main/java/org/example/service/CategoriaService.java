@@ -2,7 +2,6 @@ package org.example.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -28,16 +27,15 @@ public class CategoriaService {
 
     @Transactional
     public CategoriaResponseDTO criarCategoria(CategoriaResponseDTO dto, Long usuarioId) {
-        // primeiro procura pelo id do usuario
         User usuario = usersRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("user not found"));// se nao achar cai aqui
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + usuarioId));
 
-        if (categoriaRepository.findByNome(dto.getNome()).isPresent()) {
-            throw new DuplicateResourceException("Já existe uma categoria com esse nome: " + dto.getNome());
+        // FIX: duplicidade escopada por usuário
+        if (categoriaRepository.findByNomeAndUsuarioCategoriaId(dto.getNome(), usuarioId).isPresent()) {
+            throw new DuplicateResourceException("Você já possui uma categoria com esse nome: " + dto.getNome());
         }
 
-        Categoria novaCategoria;
-        novaCategoria = new Categoria();
+        Categoria novaCategoria = new Categoria();
         novaCategoria.setNome(dto.getNome());
         novaCategoria.setUsuarioCategoria(usuario);
         Categoria salvarCategoria = categoriaRepository.save(novaCategoria);
@@ -47,54 +45,47 @@ public class CategoriaService {
 
     public CategoriaResponseDTO toResponseDTO(Categoria categoria) {
         CategoriaResponseDTO novo = new CategoriaResponseDTO();
-        System.out.println("ID: " + categoria.getId());
         novo.setIdCategoria(categoria.getId());
         novo.setNome(categoria.getNome());
         novo.setUsuarioId(categoria.getUsuarioCategoria().getId());
         return novo;
     }
+
     @Transactional
     public CategoriaResponseDTO buscarId(Long id) {
-        Optional<Categoria> buscarOptional = categoriaRepository.findById(id);
-
-        if (buscarOptional.isPresent()) {
-            Categoria categoria = buscarOptional.get();
-            return toResponseDTO(categoria);
-        } else {
-            throw new ResourceNotFoundException("Não existe nenhuma categoria com esse ID: " + id);
-
-        }
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Não existe nenhuma categoria com esse ID: " + id));
+        return toResponseDTO(categoria);
     }
 
     @Transactional
-    public void deletarCategoriaPorId(Long id){
-        if(!categoriaRepository.existsById(id)){
+    public void deletarCategoriaPorId(Long id) {
+        if (!categoriaRepository.existsById(id)) {
             throw new ResourceNotFoundException("Não existe nenhuma categoria com esse ID: " + id);
         }
         categoriaRepository.deleteById(id);
-
     }
 
     @Transactional
-    public List<CategoriaResponseDTO> listarTodas(){
-        List<Categoria> categoria = categoriaRepository.findAll();
+    public List<CategoriaResponseDTO> listarTodas() {
+        List<Categoria> categorias = categoriaRepository.findAll();
         List<CategoriaResponseDTO> resultado = new ArrayList<>();
-        for(Categoria categorias: categoria){
-            resultado.add(toResponseDTO(categorias));
+        for (Categoria categoria : categorias) {
+            resultado.add(toResponseDTO(categoria));
         }
         return resultado;
     }
-    @Transactional
-    public CategoriaResponseDTO alterarCategoria(CategoriaResponseDTO dto, Long id){
-        Optional<Categoria> cateOptional = categoriaRepository.findById(id);
-        Categoria categoria =  cateOptional.get();
-        if(cateOptional.isPresent()){
-            categoria.setNome(dto.getNome());
-            categoriaRepository.save(categoria);
-            return toResponseDTO(categoria);
-        }else{
-            throw new ResourceNotFoundException("NAO EXISTE NEHUMA CATEGORIA COM ESSE ID/ NENHUMA ENCONTRADA");
-        }
 
+    @Transactional
+    public CategoriaResponseDTO alterarCategoria(CategoriaResponseDTO dto, Long id) {
+        // FIX: era .get() antes de isPresent()
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Não existe nenhuma categoria com esse ID: " + id));
+
+        categoria.setNome(dto.getNome());
+        categoriaRepository.save(categoria);
+        return toResponseDTO(categoria);
     }
 }
