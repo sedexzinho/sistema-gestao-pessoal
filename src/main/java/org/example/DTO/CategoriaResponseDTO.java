@@ -11,6 +11,15 @@ public class CategoriaResponseDTO {
     private String nome;
     @NotNull(message = "O ID do usuário é obrigatório")
     private Long usuarioId;
+    private String tipo;
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
 
     public String getNome() {
         return nome;
@@ -27,6 +36,7 @@ public class CategoriaResponseDTO {
     public void setUsuarioId(Long usuarioId) {
         this.usuarioId = usuarioId;
     }
+
     public Long getIdCategoria() {
         return idCategoria;
     }

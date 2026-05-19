@@ -17,28 +17,28 @@ public class CategoriaController {
 
     private final CategoriaService categoriaService;
 
-    // POST http://localhost:8080/api/sistemaDespesas/categorias/1
-    @PostMapping("/criar/{usuarioId}")
-    public ResponseEntity<CategoriaResponseDTO> criarCategoria(
+    // POST http://localhost:8080/api/sistemaDespesas/categorias/despesa/1
+    @PostMapping("/despesa/{usuarioId}")
+    public ResponseEntity<CategoriaResponseDTO> criarCategoriaDespesa(
             @RequestBody CategoriaResponseDTO dto,
             @PathVariable Long usuarioId) {
-
-        CategoriaResponseDTO criada = categoriaService.criarCategoria(dto, usuarioId);
+        CategoriaResponseDTO criada = categoriaService.criarCategoriaDespesa(dto, usuarioId);
         return ResponseEntity.status(HttpStatus.CREATED).body(criada);
     }
 
-    // GET http://localhost:8080/api/sistemaDespesas/categorias/buscar/1
-    @GetMapping("/buscar/{id}")
-    public ResponseEntity<CategoriaResponseDTO> buscarPorId(@PathVariable Long id) {
-        CategoriaResponseDTO categoria = categoriaService.buscarId(id);
-        return ResponseEntity.ok(categoria);
+    // POST http://localhost:8080/api/sistemaDespesas/categorias/receita/1
+    @PostMapping("/receita/{usuarioId}")
+    public ResponseEntity<CategoriaResponseDTO> criarCategoriaReceita(
+            @RequestBody CategoriaResponseDTO dto,
+            @PathVariable Long usuarioId) {
+        CategoriaResponseDTO criada = categoriaService.criarCategoriaReceita(dto, usuarioId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(criada);
     }
 
     // GET http://localhost:8080/api/sistemaDespesas/categorias/listar
     @GetMapping("/listar")
     public ResponseEntity<List<CategoriaResponseDTO>> listarTodas() {
-        List<CategoriaResponseDTO> categorias = categoriaService.listarTodas();
-        return ResponseEntity.ok(categorias);
+        return ResponseEntity.ok(categoriaService.listarTodas());
     }
 
     // PUT http://localhost:8080/api/sistemaDespesas/categorias/alterar/1
@@ -46,9 +46,7 @@ public class CategoriaController {
     public ResponseEntity<CategoriaResponseDTO> alterarCategoria(
             @RequestBody CategoriaResponseDTO dto,
             @PathVariable Long id) {
-
-        CategoriaResponseDTO atualizada = categoriaService.alterarCategoria(dto, id);
-        return ResponseEntity.ok(atualizada);
+        return ResponseEntity.ok(categoriaService.alterarCategoria(dto, id));
     }
 
     // DELETE http://localhost:8080/api/sistemaDespesas/categorias/deletar/1

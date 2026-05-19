@@ -42,14 +42,15 @@ public class DespesaController {
     }
 
     // PUT http://localhost:8080/api/sistemaDespesas/despesas/alterar/1
-    @PutMapping("/alterar/{id}")
-    public ResponseEntity<DespesaResponseDTO> alterarDespesa(
-            @PathVariable Long id,
-            @RequestBody DespesaResponseDTO dto) {
+    @PutMapping("/alterar/{id}/{usuarioId}")
+public ResponseEntity<DespesaResponseDTO> alterarDespesa(
+        @PathVariable Long id,
+        @PathVariable Long usuarioId,
+        @RequestBody DespesaResponseDTO dto) {
 
-        DespesaResponseDTO atualizada = despesaService.alterarDespesa(id, dto);
-        return ResponseEntity.ok(atualizada);
-    }
+    DespesaResponseDTO atualizada = despesaService.alterarDespesa(id, dto, usuarioId);
+    return ResponseEntity.ok(atualizada);
+}
 
     // DELETE http://localhost:8080/api/sistemaDespesas/despesas/deletar/1
     @DeleteMapping("/deletar/{id}")
