@@ -28,5 +28,8 @@ public class Categoria {
 
     @Column(name = "Cate_nome")
     private String nome;
+    
+    @Column(name = "tipo")
+    private String tipo; // "DESPESA" ou "RECEITA"
 
 }

@@ -1,5 +1,6 @@
 package org.example.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,8 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
 
     // FIX: escopo por usuário
     Optional<Categoria> findByNomeAndUsuarioCategoriaId(String nome, Long usuarioId);
+
+     List<Categoria> findByUsuarioCategoriaIdAndTipo(Long usuarioId, String tipo);
+
+       Optional<Categoria> findByNomeAndUsuarioCategoriaIdAndTipo(String nome, Long usuarioId, String tipo);
 }

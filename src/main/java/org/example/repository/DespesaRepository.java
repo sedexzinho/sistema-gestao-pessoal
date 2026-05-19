@@ -15,4 +15,6 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
     Optional<Despesa> findByNomeAndUsuarioDespesaId(String nome, Long usuarioId);
 
     List<Despesa> findByIsParceladoTrueAndConcluidoFalse();
+
+    List<Despesa> findByUsuarioDespesaId(Long usuarioId);
 }

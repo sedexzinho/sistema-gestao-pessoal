@@ -44,9 +44,9 @@ public class DespesaService {
 
         // FIX: categoria escopada por usuário
         Categoria categoria = categoriaRepository
-                .findByNomeAndUsuarioCategoriaId(dto.getNomeCategoria(), usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Nenhuma categoria '" + dto.getNomeCategoria() + "' encontrada para este usuário."));
+        .findByNomeAndUsuarioCategoriaIdAndTipo(dto.getNomeCategoria(), usuarioId, "DESPESA")
+        .orElseThrow(() -> new ResourceNotFoundException(
+                "Nenhuma categoria de DESPESA '" + dto.getNomeCategoria() + "' encontrada para este usuário."));
 
         Despesa despesa = new Despesa();
         despesa.setNome(dto.getNome());
@@ -93,7 +93,7 @@ public class DespesaService {
     }
 
     @Transactional
-    public DespesaResponseDTO alterarDespesa(Long id, DespesaResponseDTO dto) {
+    public DespesaResponseDTO alterarDespesa(Long id, DespesaResponseDTO dto, Long usuarioId) {
         Despesa despesa = despesaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Não existe nenhuma despesa com esse ID: " + id));
@@ -106,9 +106,10 @@ public class DespesaService {
         if (dto.getNomeCategoria() != null && !dto.getNomeCategoria().isEmpty()) {
             // FIX: busca categoria pelo usuário dono da despesa, sem criar categoria órfã
             Categoria categoria = categoriaRepository
-                    .findByNomeAndUsuarioCategoriaId(dto.getNomeCategoria(), despesa.getUsuarioDespesa().getId())
+                    .findByNomeAndUsuarioCategoriaIdAndTipo(dto.getNomeCategoria(), usuarioId, "DESPESA")
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            "Nenhuma categoria '" + dto.getNomeCategoria() + "' encontrada para este usuário."));
+                            "Nenhuma categoria de DESPESA '" + dto.getNomeCategoria()
+                                    + "' encontrada para este usuário."));
             despesa.setCategoria(categoria);
         }
 

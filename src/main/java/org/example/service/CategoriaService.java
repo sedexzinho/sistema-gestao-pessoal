@@ -26,18 +26,27 @@ public class CategoriaService {
     }
 
     @Transactional
-    public CategoriaResponseDTO criarCategoria(CategoriaResponseDTO dto, Long usuarioId) {
+    public CategoriaResponseDTO criarCategoriaDespesa(CategoriaResponseDTO dto, Long usuarioId) {
+        return criarCategoria(dto, usuarioId, "DESPESA");
+    }
+
+    @Transactional
+    public CategoriaResponseDTO criarCategoriaReceita(CategoriaResponseDTO dto, Long usuarioId) {
+        return criarCategoria(dto, usuarioId, "RECEITA");
+    }
+
+    private CategoriaResponseDTO criarCategoria(CategoriaResponseDTO dto, Long usuarioId, String tipo) {
         User usuario = usersRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + usuarioId));
 
-        // FIX: duplicidade escopada por usuário
-        if (categoriaRepository.findByNomeAndUsuarioCategoriaId(dto.getNome(), usuarioId).isPresent()) {
-            throw new DuplicateResourceException("Você já possui uma categoria com esse nome: " + dto.getNome());
+        if (categoriaRepository.findByNomeAndUsuarioCategoriaIdAndTipo(dto.getNome(), usuarioId, tipo).isPresent()) {
+            throw new DuplicateResourceException("Você já possui uma categoria " + tipo + " com esse nome: " + dto.getNome());
         }
 
         Categoria novaCategoria = new Categoria();
         novaCategoria.setNome(dto.getNome());
         novaCategoria.setUsuarioCategoria(usuario);
+        novaCategoria.setTipo(tipo);
         Categoria salvarCategoria = categoriaRepository.save(novaCategoria);
 
         return toResponseDTO(salvarCategoria);
@@ -48,6 +57,7 @@ public class CategoriaService {
         novo.setIdCategoria(categoria.getId());
         novo.setNome(categoria.getNome());
         novo.setUsuarioId(categoria.getUsuarioCategoria().getId());
+        novo.setTipo(categoria.getTipo());
         return novo;
     }
 
@@ -79,7 +89,6 @@ public class CategoriaService {
 
     @Transactional
     public CategoriaResponseDTO alterarCategoria(CategoriaResponseDTO dto, Long id) {
-        // FIX: era .get() antes de isPresent()
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Não existe nenhuma categoria com esse ID: " + id));
