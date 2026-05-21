@@ -28,35 +28,44 @@ public class SaldoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + usuarioId));
 
         LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+        int mesAtual = hoje.getMonthValue();
+        int anoAtual = hoje.getYear();
 
-        // Soma todas as receitas recebidas
+        // Soma receitas RECEBIDAS no mês atual
         List<Receitas> receitasRecebidas = receitasRepository
                 .findByUsuarioReceitaIdAndStatusReceita(usuarioId, "RECEBIDO");
 
         BigDecimal totalReceitas = receitasRecebidas.stream()
+                .filter(r -> r.getDataRecebimentoReceita() != null
+                        && r.getDataRecebimentoReceita().getMonthValue() == mesAtual
+                        && r.getDataRecebimentoReceita().getYear() == anoAtual)
                 .map(Receitas::getValorReceita)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Busca todas as despesas do usuário
+        // Busca despesas do usuário
         List<Despesa> despesas = despesaRepository.findByUsuarioDespesaId(usuarioId);
 
         BigDecimal totalDespesas = BigDecimal.ZERO;
 
         for (Despesa despesa : despesas) {
 
-            // Despesa AVULSO: desconta imediatamente
+            // AVULSO: desconta apenas se foi registrada no mês atual
             if ("AVULSO".equals(despesa.getTipo())) {
-                totalDespesas = totalDespesas.add(despesa.getValorDespesa());
+                if (despesa.getDataRegistro() != null
+                        && despesa.getDataRegistro().getMonthValue() == mesAtual
+                        && despesa.getDataRegistro().getYear() == anoAtual) {
+                    totalDespesas = totalDespesas.add(despesa.getValorDespesa());
+                }
             }
 
-            // Despesa PARCELADA: desconta apenas parcelas já vencidas
-            // Parcela vence no mês seguinte ao da compra
-            if ("PARCELADO".equals(despesa.getTipo()) && despesa.getParcelaAtual() != null) {
-                int parcelasVencidas = calcularParcelasVencidas(despesa, hoje);
-                if (parcelasVencidas > 0 && despesa.getValorParcela() != null) {
-                    BigDecimal totalParcelasVencidas = despesa.getValorParcela()
-                            .multiply(BigDecimal.valueOf(parcelasVencidas));
-                    totalDespesas = totalDespesas.add(totalParcelasVencidas);
+            // PARCELADO: desconta apenas parcelas vencidas no mês atual
+            if ("PARCELADO".equals(despesa.getTipo()) && despesa.getValorParcela() != null) {
+                boolean venceEssesMes = despesa.getDiaPagamento() != null
+                        && despesa.getDataRegistro() != null
+                        && temParcelaVencendoEsseMes(despesa, hoje);
+
+                if (venceEssesMes) {
+                    totalDespesas = totalDespesas.add(despesa.getValorParcela());
                 }
             }
         }
@@ -64,29 +73,29 @@ public class SaldoService {
         return totalReceitas.subtract(totalDespesas);
     }
 
-    private int calcularParcelasVencidas(Despesa despesa, LocalDate hoje) {
-        // A primeira parcela vence no mês seguinte ao registro
-        LocalDate dataRegistro = despesa.getDataRegistro();
-        if (dataRegistro == null || despesa.getDiaPagamento() == null) return 0;
-
-        // Primeira parcela vence no mês seguinte
-        LocalDate primeiroVencimento = dataRegistro
+    private boolean temParcelaVencendoEsseMes(Despesa despesa, LocalDate hoje) {
+        // Primeira parcela vence no mês seguinte ao registro
+        LocalDate primeiroVencimento = despesa.getDataRegistro()
                 .plusMonths(1)
-                .withDayOfMonth(Math.min(despesa.getDiaPagamento(),
-                        dataRegistro.plusMonths(1).lengthOfMonth()));
+                .withDayOfMonth(Math.min(
+                        despesa.getDiaPagamento(),
+                        despesa.getDataRegistro().plusMonths(1).lengthOfMonth()
+                ));
 
-        if (hoje.isBefore(primeiroVencimento)) return 0;
+        // Conta quantos meses passaram desde o primeiro vencimento
+        int mesesDesdeInicio = (hoje.getYear() - primeiroVencimento.getYear()) * 12
+                + (hoje.getMonthValue() - primeiroVencimento.getMonthValue());
 
-        // Conta quantos vencimentos já passaram até hoje
-        int mesesVencidos = 0;
-        LocalDate vencimento = primeiroVencimento;
-        int totalParcelas = despesa.getTotalParcelas() == null ? 0 : despesa.getTotalParcelas();
+        if (mesesDesdeInicio < 0) return false;
+        if (mesesDesdeInicio >= (despesa.getTotalParcelas() == null ? 0 : despesa.getTotalParcelas())) return false;
 
-        while (!vencimento.isAfter(hoje) && mesesVencidos < totalParcelas) {
-            mesesVencidos++;
-            vencimento = vencimento.plusMonths(1);
-        }
+        // Verifica se o vencimento desse mês já passou
+        LocalDate vencimentoEsseMes = LocalDate.of(
+                hoje.getYear(),
+                hoje.getMonthValue(),
+                Math.min(despesa.getDiaPagamento(), hoje.lengthOfMonth())
+        );
 
-        return mesesVencidos;
+        return !hoje.isBefore(vencimentoEsseMes);
     }
 }

@@ -20,48 +20,48 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final UsersRepository usersRepository;
-    private final TokenService tokenService;
-    private final PasswordEncoder passwordEncoder;
+        private final AuthenticationManager authenticationManager;
+        private final UsersRepository usersRepository;
+        private final TokenService tokenService;
+        private final PasswordEncoder passwordEncoder;
 
-    // POST http://localhost:8080/api/sistemaDespesas/auth/login
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody AuthDTO dto) {
-        UsernamePasswordAuthenticationToken credentials =
-                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getSenha());
+        // POST http://localhost:8080/api/sistemaDespesas/auth/login
+        @PostMapping("/login")
+        public ResponseEntity<Map<String, Object>> login(@RequestBody AuthDTO dto) {
+                UsernamePasswordAuthenticationToken credentials = new UsernamePasswordAuthenticationToken(
+                                dto.getEmail(), dto.getSenha());
 
-        Authentication auth = authenticationManager.authenticate(credentials);
-        User user = (User) auth.getPrincipal();
-        String token = tokenService.gerarToken(user);
+                Authentication auth = authenticationManager.authenticate(credentials);
+                User user = (User) auth.getPrincipal();
+                String token = tokenService.gerarToken(user);
 
-        return ResponseEntity.ok(Map.of(
-                "token", token,
-                "nome", user.getNome(),
-                "id", user.getId().toString()
-        ));
-    }
-
-    // POST http://localhost:8080/api/sistemaDespesas/auth/registro
-    @PostMapping("/registro")
-    public ResponseEntity<Map<String, String>> registro(@RequestBody AuthDTO dto) {
-        if (usersRepository.findByEmail(dto.getEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("erro", "Email já cadastrado."));
+                return ResponseEntity.ok(Map.of(
+                                "token", token,
+                                "nome", user.getNome(),
+                                "id", user.getId().toString(),
+                                "salarioMensal", user.getSalarioMensal() != null ? user.getSalarioMensal() : 0));
         }
 
-        User novoUsuario = User.builder()
-                .nome(dto.getNome())
-                .email(dto.getEmail())
-                .senha(passwordEncoder.encode(dto.getSenha()))
-                .codigo(dto.getCodigo())
-                .salarioMensal(dto.getSalarioMensal())
-                .role("ROLE_USER")
-                .build();
+        // POST http://localhost:8080/api/sistemaDespesas/auth/registro
+        @PostMapping("/registro")
+        public ResponseEntity<Map<String, String>> registro(@RequestBody AuthDTO dto) {
+                if (usersRepository.findByEmail(dto.getEmail()).isPresent()) {
+                        return ResponseEntity.status(HttpStatus.CONFLICT)
+                                        .body(Map.of("erro", "Email já cadastrado."));
+                }
 
-        usersRepository.save(novoUsuario);
+                User novoUsuario = User.builder()
+                                .nome(dto.getNome())
+                                .email(dto.getEmail())
+                                .senha(passwordEncoder.encode(dto.getSenha()))
+                                .codigo(dto.getCodigo())
+                                .salarioMensal(dto.getSalarioMensal())
+                                .role("ROLE_USER")
+                                .build();
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("mensagem", "Usuário criado com sucesso."));
-    }
+                usersRepository.save(novoUsuario);
+
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(Map.of("mensagem", "Usuário criado com sucesso."));
+        }
 }

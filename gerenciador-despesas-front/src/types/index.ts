@@ -11,6 +11,12 @@ export interface CategoriaDTO {
   usuarioId?: number;
   tipo?: string;
 }
+export interface AuthResponse {
+  token: string;
+  nome: string;
+  id: string;
+  salarioMensal?: number;
+}
 
 export interface DespesaDTO {
   id?: number;
