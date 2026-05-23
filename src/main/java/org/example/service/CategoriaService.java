@@ -3,7 +3,9 @@ package org.example.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import org.example.DTO.CategoriaResponseDTO;
 import org.example.exceptions.DuplicateResourceException;
@@ -17,6 +19,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class CategoriaService {
+
     private final CategoriaRepository categoriaRepository;
     private final UsersRepository usersRepository;
 
@@ -47,9 +50,50 @@ public class CategoriaService {
         novaCategoria.setNome(dto.getNome());
         novaCategoria.setUsuarioCategoria(usuario);
         novaCategoria.setTipo(tipo);
-        Categoria salvarCategoria = categoriaRepository.save(novaCategoria);
 
-        return toResponseDTO(salvarCategoria);
+        return toResponseDTO(categoriaRepository.save(novaCategoria));
+    }
+
+    // ✅ Lista apenas categorias do usuário autenticado
+    @Transactional
+    public List<CategoriaResponseDTO> listarPorUsuario(Long usuarioId) {
+        List<Categoria> categorias = categoriaRepository.findByUsuarioCategoriaId(usuarioId);
+        List<CategoriaResponseDTO> resultado = new ArrayList<>();
+        for (Categoria categoria : categorias) {
+            resultado.add(toResponseDTO(categoria));
+        }
+        return resultado;
+    }
+
+    // ✅ Valida ownership ao alterar
+    @Transactional
+    public CategoriaResponseDTO alterarCategoria(CategoriaResponseDTO dto, Long id, Long usuarioId) {
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Não existe nenhuma categoria com esse ID: " + id));
+
+        if (!categoria.getUsuarioCategoria().getId().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Você não tem permissão para alterar essa categoria.");
+        }
+
+        categoria.setNome(dto.getNome());
+        return toResponseDTO(categoriaRepository.save(categoria));
+    }
+
+    // ✅ Valida ownership ao deletar
+    @Transactional
+    public void deletarCategoriaPorId(Long id, Long usuarioId) {
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Não existe nenhuma categoria com esse ID: " + id));
+
+        if (!categoria.getUsuarioCategoria().getId().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Você não tem permissão para deletar essa categoria.");
+        }
+
+        categoriaRepository.deleteById(id);
     }
 
     public CategoriaResponseDTO toResponseDTO(Categoria categoria) {
@@ -59,42 +103,5 @@ public class CategoriaService {
         novo.setUsuarioId(categoria.getUsuarioCategoria().getId());
         novo.setTipo(categoria.getTipo());
         return novo;
-    }
-
-    @Transactional
-    public CategoriaResponseDTO buscarId(Long id) {
-        Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Não existe nenhuma categoria com esse ID: " + id));
-        return toResponseDTO(categoria);
-    }
-
-    @Transactional
-    public void deletarCategoriaPorId(Long id) {
-        if (!categoriaRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Não existe nenhuma categoria com esse ID: " + id);
-        }
-        categoriaRepository.deleteById(id);
-    }
-
-    @Transactional
-    public List<CategoriaResponseDTO> listarTodas() {
-        List<Categoria> categorias = categoriaRepository.findAll();
-        List<CategoriaResponseDTO> resultado = new ArrayList<>();
-        for (Categoria categoria : categorias) {
-            resultado.add(toResponseDTO(categoria));
-        }
-        return resultado;
-    }
-
-    @Transactional
-    public CategoriaResponseDTO alterarCategoria(CategoriaResponseDTO dto, Long id) {
-        Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Não existe nenhuma categoria com esse ID: " + id));
-
-        categoria.setNome(dto.getNome());
-        categoriaRepository.save(categoria);
-        return toResponseDTO(categoria);
     }
 }

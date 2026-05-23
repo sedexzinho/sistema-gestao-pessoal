@@ -12,7 +12,9 @@ import org.example.models.User;
 import org.example.repository.CategoriaRepository;
 import org.example.repository.ReceitasRepository;
 import org.example.repository.UsersRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.transaction.Transactional;
 
@@ -24,11 +26,26 @@ public class ReceitaService {
     private final CategoriaRepository categoriaRepository;
 
     public ReceitaService(ReceitasRepository receitasRepository,
-                          UsersRepository usersRepository,
-                          CategoriaRepository categoriaRepository) {
+            UsersRepository usersRepository,
+            CategoriaRepository categoriaRepository) {
         this.receitasRepository = receitasRepository;
         this.usersRepository = usersRepository;
         this.categoriaRepository = categoriaRepository;
+    }
+
+    @Transactional
+    public ReceitaResponseDTO receberReceita(Long id, Long usuarioId) {
+        Receitas receita = receitasRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Não existe nenhuma receita com esse ID: " + id));
+
+        if (!receita.getUsuarioReceita().getId().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Você não tem permissão para alterar essa receita.");
+        }
+
+        receita.setStatusReceita("RECEBIDO");
+        return toResponseDTO(receitasRepository.save(receita));
     }
 
     @Transactional
@@ -60,16 +77,8 @@ public class ReceitaService {
     }
 
     @Transactional
-    public ReceitaResponseDTO buscarId(Long id) {
-        Receitas receita = receitasRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Não existe nenhuma receita com esse ID: " + id));
-        return toResponseDTO(receita);
-    }
-
-    @Transactional
-    public List<ReceitaResponseDTO> listarTodas() {
-        List<Receitas> receitas = receitasRepository.findAll();
+    public List<ReceitaResponseDTO> listarPorUsuario(Long usuarioId) {
+        List<Receitas> receitas = receitasRepository.findByUsuarioReceitaId(usuarioId);
         List<ReceitaResponseDTO> resultado = new ArrayList<>();
         for (Receitas receita : receitas) {
             resultado.add(toResponseDTO(receita));
@@ -78,10 +87,28 @@ public class ReceitaService {
     }
 
     @Transactional
+    public ReceitaResponseDTO buscarPorIdEUsuario(Long id, Long usuarioId) {
+        Receitas receita = receitasRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Não existe nenhuma receita com esse ID: " + id));
+
+        if (!receita.getUsuarioReceita().getId().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Você não tem permissão para acessar essa receita.");
+        }
+        return toResponseDTO(receita);
+    }
+
+    @Transactional
     public ReceitaResponseDTO alterarReceita(Long id, ReceitaResponseDTO dto, Long usuarioId) {
         Receitas receita = receitasRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Não existe nenhuma receita com esse ID: " + id));
+
+        if (!receita.getUsuarioReceita().getId().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Você não tem permissão para alterar essa receita.");
+        }
 
         receita.setNomeReceita(dto.getNomeReceita());
         receita.setValorReceita(dto.getValorReceita());
@@ -92,18 +119,23 @@ public class ReceitaService {
             Categoria categoria = categoriaRepository
                     .findByNomeAndUsuarioCategoriaIdAndTipo(dto.getNomeCategoria(), usuarioId, "RECEITA")
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            "Nenhuma categoria de RECEITA '" + dto.getNomeCategoria() + "' encontrada para este usuário."));
+                            "Nenhuma categoria de RECEITA '" + dto.getNomeCategoria()
+                                    + "' encontrada para este usuário."));
             receita.setCategoria(categoria);
         }
 
-        Receitas salva = receitasRepository.save(receita);
-        return toResponseDTO(salva);
+        return toResponseDTO(receitasRepository.save(receita));
     }
 
     @Transactional
-    public void deletarReceita(Long id) {
-        if (!receitasRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Não existe nenhuma receita com esse ID: " + id);
+    public void deletarReceita(Long id, Long usuarioId) {
+        Receitas receita = receitasRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Não existe nenhuma receita com esse ID: " + id));
+
+        if (!receita.getUsuarioReceita().getId().equals(usuarioId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Você não tem permissão para deletar essa receita.");
         }
         receitasRepository.deleteById(id);
     }

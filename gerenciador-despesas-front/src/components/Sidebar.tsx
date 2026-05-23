@@ -77,6 +77,9 @@ export function Sidebar() {
         >
           <span>🏷️</span> Cat. Receitas
         </Link>
+        <Link to="/receitas/nova" style={linkStyle("/receitas/nova")}>
+          <span>➕</span> Nova Receita
+        </Link>
       </nav>
 
       <button onClick={handleLogout} style={styles.botaoSair}>

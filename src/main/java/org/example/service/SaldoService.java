@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.example.models.Despesa;
 import org.example.models.Receitas;
+import org.example.models.User;
 import org.example.repository.DespesaRepository;
 import org.example.repository.ReceitasRepository;
 import org.example.repository.UsersRepository;
@@ -24,12 +25,19 @@ public class SaldoService {
     private final UsersRepository usersRepository;
 
     public BigDecimal calcularSaldo(Long usuarioId) {
-        usersRepository.findById(usuarioId)
+
+        // Busca o usuário (e já valida se existe)
+        User usuario = usersRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + usuarioId));
 
         LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
         int mesAtual = hoje.getMonthValue();
         int anoAtual = hoje.getYear();
+
+        // Inclui o salário mensal como base das receitas
+        BigDecimal salario = usuario.getSalarioMensal() != null
+                ? usuario.getSalarioMensal()
+                : BigDecimal.ZERO;
 
         // Soma receitas RECEBIDAS no mês atual
         List<Receitas> receitasRecebidas = receitasRepository
@@ -41,6 +49,9 @@ public class SaldoService {
                         && r.getDataRecebimentoReceita().getYear() == anoAtual)
                 .map(Receitas::getValorReceita)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Salário + receitas do mês
+        totalReceitas = salario.add(totalReceitas);
 
         // Busca despesas do usuário
         List<Despesa> despesas = despesaRepository.findByUsuarioDespesaId(usuarioId);
@@ -60,11 +71,11 @@ public class SaldoService {
 
             // PARCELADO: desconta apenas parcelas vencidas no mês atual
             if ("PARCELADO".equals(despesa.getTipo()) && despesa.getValorParcela() != null) {
-                boolean venceEssesMes = despesa.getDiaPagamento() != null
+                boolean venceEsseMes = despesa.getDiaPagamento() != null
                         && despesa.getDataRegistro() != null
                         && temParcelaVencendoEsseMes(despesa, hoje);
 
-                if (venceEssesMes) {
+                if (venceEsseMes) {
                     totalDespesas = totalDespesas.add(despesa.getValorParcela());
                 }
             }

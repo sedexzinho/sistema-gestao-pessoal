@@ -7,7 +7,7 @@ import api from '../api/axios';
 import axios from 'axios';
 import type { CategoriaDTO } from '../types';
 
-export function NovaDespesa() {
+export function NovaReceita() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
   const [categorias, setCategorias] = useState<CategoriaDTO[]>([]);
@@ -15,14 +15,11 @@ export function NovaDespesa() {
   const [toast, setToast] = useState<{ mensagem: string; tipo: 'sucesso' | 'erro' } | null>(null);
 
   const [form, setForm] = useState({
-    nome: '',
+    nomeReceita: '',
     nomeCategoria: '',
-    isParcelado: false,
-    valor: '',
-    diaPagamento: '',
-    totalParcelas: '',
-    valorParcela: '',
-    dataRegistro: new Date().toISOString().split('T')[0],
+    tipoReceita: 'SALARIO',
+    valorReceita: '',
+    dataRecebimentoReceita: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
@@ -30,7 +27,7 @@ export function NovaDespesa() {
       if (!usuario?.id) return;
       try {
         const res = await api.get(`/categorias/listar`);
-        setCategorias(res.data.filter((c: CategoriaDTO) => c.tipo === 'DESPESA'));
+        setCategorias(res.data.filter((c: CategoriaDTO) => c.tipo === 'RECEITA'));
       } catch (err) {
         console.error(err);
       }
@@ -48,28 +45,33 @@ export function NovaDespesa() {
     setLoading(true);
 
     try {
-      await api.post(`/despesas`, {
-        nome: form.nome,
+      await api.post(`/receitas`, {
+        nomeReceita: form.nomeReceita,
         nomeCategoria: form.nomeCategoria,
-        isParcelado: form.isParcelado,
-        valor: parseFloat(form.valor),
-        diaPagamento: parseInt(form.diaPagamento),
-        totalParcelas: form.isParcelado ? parseInt(form.totalParcelas) : null,
-        valorParcela: form.isParcelado ? parseFloat(form.valorParcela) : null,
-        dataRegistro: form.dataRegistro,
+        tipoReceita: form.tipoReceita,
+        valorReceita: parseFloat(form.valorReceita),
+        dataRecebimentoReceita: form.dataRecebimentoReceita,
       });
-      setToast({ mensagem: 'Despesa criada com sucesso!', tipo: 'sucesso' });
-      setTimeout(() => navigate('/dashboard'), 2000);
+      setToast({ mensagem: 'Receita criada com sucesso!', tipo: 'sucesso' });
+      setTimeout(() => navigate('/receitas'), 2000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setToast({ mensagem: 'Você já possui uma despesa com esse nome.', tipo: 'erro' });
+        setToast({ mensagem: 'Você já possui uma receita com esse nome.', tipo: 'erro' });
       } else {
-        setToast({ mensagem: 'Erro ao criar despesa.', tipo: 'erro' });
+        setToast({ mensagem: 'Erro ao criar receita.', tipo: 'erro' });
       }
     } finally {
       setLoading(false);
     }
   }
+
+  const TIPOS_RECEITA = [
+    { value: 'SALARIO', label: '💼 Salário' },
+    { value: 'FREELANCE', label: '💻 Freelance' },
+    { value: 'INVESTIMENTO', label: '📈 Investimento' },
+    { value: 'ALUGUEL', label: '🏠 Aluguel' },
+    { value: 'OUTROS', label: '📦 Outros' },
+  ];
 
   return (
     <div style={styles.wrapper}>
@@ -77,8 +79,8 @@ export function NovaDespesa() {
 
       <main style={styles.main}>
         <div style={styles.header}>
-          <h1 style={styles.titulo}>Nova Despesa</h1>
-          <p style={styles.subtitulo}>Cadastre uma despesa avulsa ou parcelada</p>
+          <h1 style={styles.titulo}>Nova Receita</h1>
+          <p style={styles.subtitulo}>Cadastre um novo recebimento</p>
         </div>
 
         <hr style={styles.divisor} />
@@ -93,10 +95,10 @@ export function NovaDespesa() {
               <div style={styles.grupo}>
                 <label style={styles.label}>Nome</label>
                 <input
-                  name="nome"
+                  name="nomeReceita"
                   type="text"
-                  placeholder="Ex: Mercado"
-                  value={form.nome}
+                  placeholder="Ex: Salário maio"
+                  value={form.nomeReceita}
                   onChange={handleChange}
                   style={styles.input}
                   required
@@ -123,28 +125,22 @@ export function NovaDespesa() {
                 <div style={{ flex: 1 }}>
                   <label style={styles.label}>Tipo</label>
                   <div style={styles.tipoWrapper}>
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, isParcelado: false })}
-                      style={{
-                        ...styles.tipoBotao,
-                        border: !form.isParcelado ? '2px solid #9BFF97' : '2px solid #2A2A2A',
-                        color: !form.isParcelado ? '#9BFF97' : '#A0A0A0',
-                      }}
-                    >
-                      🧾 Avulsa
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, isParcelado: true })}
-                      style={{
-                        ...styles.tipoBotao,
-                        border: form.isParcelado ? '2px solid #9BFF97' : '2px solid #2A2A2A',
-                        color: form.isParcelado ? '#9BFF97' : '#A0A0A0',
-                      }}
-                    >
-                      💳 Parcelada
-                    </button>
+                    {TIPOS_RECEITA.map(tipo => (
+                      <button
+                        key={tipo.value}
+                        type="button"
+                        onClick={() => setForm({ ...form, tipoReceita: tipo.value })}
+                        style={{
+                          ...styles.tipoBotao,
+                          border: form.tipoReceita === tipo.value
+                            ? '2px solid #9BFF97'
+                            : '2px solid #2A2A2A',
+                          color: form.tipoReceita === tipo.value ? '#9BFF97' : '#A0A0A0',
+                        }}
+                      >
+                        {tipo.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -152,101 +148,35 @@ export function NovaDespesa() {
 
             {/* Detalhes */}
             <div style={styles.card}>
-              <p style={styles.cardTitulo}>
-                Detalhes da despesa {form.isParcelado ? 'parcelada' : 'avulsa'}
-              </p>
+              <p style={styles.cardTitulo}>Detalhes do recebimento</p>
 
-              {!form.isParcelado ? (
-                <div style={styles.linha}>
-                  <div style={{ flex: 1 }}>
-                    <label style={styles.label}>Valor</label>
-                    <input
-                      name="valor"
-                      type="number"
-                      placeholder="0,00"
-                      value={form.valor}
-                      onChange={handleChange}
-                      style={styles.input}
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={styles.label}>Data</label>
-                    <input
-                      name="dataRegistro"
-                      type="date"
-                      value={form.dataRegistro}
-                      onChange={handleChange}
-                      style={styles.input}
-                      required
-                    />
-                  </div>
+              <div style={styles.linha}>
+                <div style={{ flex: 1 }}>
+                  <label style={styles.label}>Valor</label>
+                  <input
+                    name="valorReceita"
+                    type="number"
+                    placeholder="0,00"
+                    value={form.valorReceita}
+                    onChange={handleChange}
+                    style={styles.input}
+                    min="0"
+                    step="0.01"
+                    required
+                  />
                 </div>
-              ) : (
-                <>
-                  <div style={styles.linha}>
-                    <div style={{ flex: 1 }}>
-                      <label style={styles.label}>Valor total</label>
-                      <input
-                        name="valor"
-                        type="number"
-                        placeholder="0,00"
-                        value={form.valor}
-                        onChange={handleChange}
-                        style={styles.input}
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={styles.label}>Nº de parcelas</label>
-                      <input
-                        name="totalParcelas"
-                        type="number"
-                        placeholder="Ex: 12"
-                        value={form.totalParcelas}
-                        onChange={handleChange}
-                        style={styles.input}
-                        min="2"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div style={styles.linha}>
-                    <div style={{ flex: 1 }}>
-                      <label style={styles.label}>Valor da parcela</label>
-                      <input
-                        name="valorParcela"
-                        type="number"
-                        placeholder="0,00"
-                        value={form.valorParcela}
-                        onChange={handleChange}
-                        style={styles.input}
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={styles.label}>Dia do vencimento</label>
-                      <input
-                        name="diaPagamento"
-                        type="number"
-                        placeholder="Ex: 10"
-                        value={form.diaPagamento}
-                        onChange={handleChange}
-                        style={styles.input}
-                        min="1"
-                        max="31"
-                        required
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+                <div style={{ flex: 1 }}>
+                  <label style={styles.label}>Data de recebimento</label>
+                  <input
+                    name="dataRecebimentoReceita"
+                    type="date"
+                    value={form.dataRecebimentoReceita}
+                    onChange={handleChange}
+                    style={styles.input}
+                    required
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -256,7 +186,9 @@ export function NovaDespesa() {
               <p style={styles.cardTitulo}>Resumo</p>
               <div style={styles.resumoLinha}>
                 <span style={styles.resumoLabel}>Tipo</span>
-                <span style={styles.resumoValor}>{form.isParcelado ? 'Parcelada' : 'Avulsa'}</span>
+                <span style={styles.resumoValor}>
+                  {TIPOS_RECEITA.find(t => t.value === form.tipoReceita)?.label || '—'}
+                </span>
               </div>
               <div style={styles.resumoLinha}>
                 <span style={styles.resumoLabel}>Categoria</span>
@@ -264,33 +196,32 @@ export function NovaDespesa() {
               </div>
               <div style={styles.resumoLinha}>
                 <span style={styles.resumoLabel}>Valor</span>
-                <span style={{ ...styles.resumoValor, color: '#FF5C5C' }}>
-                  {form.valor ? `R$ ${parseFloat(form.valor).toFixed(2)}` : '—'}
+                <span style={{ ...styles.resumoValor, color: '#9BFF97' }}>
+                  {form.valorReceita ? `R$ ${parseFloat(form.valorReceita).toFixed(2)}` : '—'}
                 </span>
               </div>
-              {form.isParcelado && (
-                <>
-                  <div style={styles.resumoLinha}>
-                    <span style={styles.resumoLabel}>Parcelas</span>
-                    <span style={styles.resumoValor}>{form.totalParcelas || '—'}</span>
-                  </div>
-                  <div style={styles.resumoLinha}>
-                    <span style={styles.resumoLabel}>Valor/parcela</span>
-                    <span style={{ ...styles.resumoValor, color: '#FFB347' }}>
-                      {form.valorParcela ? `R$ ${parseFloat(form.valorParcela).toFixed(2)}` : '—'}
-                    </span>
-                  </div>
-                </>
-              )}
+              <div style={styles.resumoLinha}>
+                <span style={styles.resumoLabel}>Data</span>
+                <span style={styles.resumoValor}>
+                  {form.dataRecebimentoReceita
+                    ? new Date(form.dataRecebimentoReceita).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        timeZone: 'UTC',
+                      })
+                    : '—'}
+                </span>
+              </div>
             </div>
 
             <button type="submit" style={styles.botaoCriar} disabled={loading}>
-              {loading ? 'Criando...' : 'Criar despesa'}
+              {loading ? 'Criando...' : 'Criar receita'}
             </button>
             <button
               type="button"
               style={styles.botaoCancelar}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/receitas')}
             >
               Cancelar
             </button>
@@ -415,17 +346,19 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tipoWrapper: {
     display: 'flex',
-    gap: '0.75rem',
+    gap: '0.5rem',
+    flexWrap: 'wrap',
   },
   tipoBotao: {
-    flex: 1,
-    padding: '0.65rem',
+    flex: '1 1 auto',
+    padding: '0.6rem 0.5rem',
     borderRadius: '8px',
     backgroundColor: '#0D0D0D',
-    fontSize: '0.9rem',
+    fontSize: '0.82rem',
     fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s',
+    whiteSpace: 'nowrap',
   },
   resumoCard: {
     backgroundColor: '#1A1A1A',

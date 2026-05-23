@@ -11,12 +11,16 @@ import org.example.models.Categoria;
 @Repository
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
 
-    Optional<Categoria> findByNome(String nome);
+  Optional<Categoria> findByNome(String nome);
 
-    // FIX: escopo por usuário
-    Optional<Categoria> findByNomeAndUsuarioCategoriaId(String nome, Long usuarioId);
+  // FIX: escopo por usuário
+  Optional<Categoria> findByNomeAndUsuarioCategoriaId(String nome, Long usuarioId);
 
-     List<Categoria> findByUsuarioCategoriaIdAndTipo(Long usuarioId, String tipo);
+  List<Categoria> findByUsuarioCategoriaIdAndTipo(Long usuarioId, String tipo);
 
-       Optional<Categoria> findByNomeAndUsuarioCategoriaIdAndTipo(String nome, Long usuarioId, String tipo);
+  Optional<Categoria> findByNomeAndUsuarioCategoriaIdAndTipo(String nome, Long usuarioId, String tipo);
+
+  List<Categoria> findByUsuarioCategoriaId(Long usuarioId);
+
+
 }

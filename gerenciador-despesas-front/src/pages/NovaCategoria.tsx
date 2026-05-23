@@ -1,21 +1,24 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Sidebar } from '../components/Sidebar';
-import { Toast } from '../components/Toast';
-import { useAuth } from '../context/useAuth';
-import api from '../api/axios';
-import axios from 'axios';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Sidebar } from "../components/Sidebar";
+import { Toast } from "../components/Toast";
+import { useAuth } from "../context/useAuth";
+import api from "../api/axios";
+import axios from "axios";
 
 interface Props {
-  tipo: 'despesa' | 'receita';
+  tipo: "despesa" | "receita";
 }
 
 export function NovaCategoria({ tipo }: Props) {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const [nome, setNome] = useState('');
+  const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ mensagem: string; tipo: 'sucesso' | 'erro' } | null>(null);
+  const [toast, setToast] = useState<{
+    mensagem: string;
+    tipo: "sucesso" | "erro";
+  } | null>(null);
 
   async function handleCriar(e: React.FormEvent) {
     e.preventDefault();
@@ -23,15 +26,19 @@ export function NovaCategoria({ tipo }: Props) {
     setLoading(true);
 
     try {
-      await api.post(`/categorias/${tipo}/${usuario.id}`, { nome });
-      setToast({ mensagem: 'Categoria criada com sucesso!', tipo: 'sucesso' });
-      setNome('');
-      setTimeout(() => navigate(tipo === 'despesa' ? '/despesas' : '/receitas'), 2000);
+      // ✅ Sem usuarioId na URL — o backend extrai do token JWT
+      await api.post(`/categorias/${tipo}`, { nome });
+      setToast({ mensagem: "Categoria criada com sucesso!", tipo: "sucesso" });
+      setNome("");
+      setTimeout(() => navigate("/dashboard"), 2000);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setToast({ mensagem: 'Você já possui uma categoria com esse nome.', tipo: 'erro' });
+        setToast({
+          mensagem: "Você já possui uma categoria com esse nome.",
+          tipo: "erro",
+        });
       } else {
-        setToast({ mensagem: 'Erro ao criar categoria.', tipo: 'erro' });
+        setToast({ mensagem: "Erro ao criar categoria.", tipo: "erro" });
       }
     } finally {
       setLoading(false);
@@ -45,7 +52,7 @@ export function NovaCategoria({ tipo }: Props) {
       <main style={styles.main}>
         <div style={styles.header}>
           <h1 style={styles.titulo}>
-            Nova Categoria de {tipo === 'despesa' ? 'Despesa' : 'Receita'}
+            Nova Categoria de {tipo === "despesa" ? "Despesa" : "Receita"}
           </h1>
           <p style={styles.subtitulo}>Organize melhor seus lançamentos</p>
         </div>
@@ -58,9 +65,9 @@ export function NovaCategoria({ tipo }: Props) {
               <p style={styles.cardTitulo}>Nome da categoria</p>
               <input
                 type="text"
-                placeholder={`Ex: ${tipo === 'despesa' ? 'Educação' : 'Freelance'}`}
+                placeholder={`Ex: ${tipo === "despesa" ? "Educação" : "Freelance"}`}
                 value={nome}
-                onChange={e => setNome(e.target.value)}
+                onChange={(e) => setNome(e.target.value)}
                 style={styles.input}
                 required
               />
@@ -69,12 +76,12 @@ export function NovaCategoria({ tipo }: Props) {
 
           <div style={styles.direita}>
             <button type="submit" style={styles.botaoCriar} disabled={loading}>
-              {loading ? 'Criando...' : 'Criar'}
+              {loading ? "Criando..." : "Criar"}
             </button>
             <button
               type="button"
               style={styles.botaoCancelar}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate("/dashboard")}
             >
               Cancelar
             </button>
@@ -95,96 +102,96 @@ export function NovaCategoria({ tipo }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   wrapper: {
-    display: 'flex',
-    minHeight: '100vh',
-    backgroundColor: '#0D0D0D',
+    display: "flex",
+    minHeight: "100vh",
+    backgroundColor: "#0D0D0D",
   },
   main: {
     flex: 1,
-    padding: '2rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2rem',
+    padding: "2rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2rem",
   },
   header: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.25rem',
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.25rem",
   },
   titulo: {
-    color: '#FFFFFF',
-    fontSize: '2rem',
+    color: "#FFFFFF",
+    fontSize: "2rem",
     fontWeight: 700,
     margin: 0,
   },
   subtitulo: {
-    color: '#A0A0A0',
-    fontSize: '0.9rem',
+    color: "#A0A0A0",
+    fontSize: "0.9rem",
     margin: 0,
   },
   divisor: {
-    border: 'none',
-    borderTop: '1px solid #2A2A2A',
+    border: "none",
+    borderTop: "1px solid #2A2A2A",
     margin: 0,
   },
   form: {
-    display: 'flex',
-    gap: '1.5rem',
-    alignItems: 'flex-start',
+    display: "flex",
+    gap: "1.5rem",
+    alignItems: "flex-start",
   },
   esquerda: {
     flex: 1,
   },
   direita: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
-    width: '280px',
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem",
+    width: "280px",
   },
   card: {
-    backgroundColor: '#1A1A1A',
-    border: '1px solid #2A2A2A',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem',
+    backgroundColor: "#1A1A1A",
+    border: "1px solid #2A2A2A",
+    borderRadius: "12px",
+    padding: "1.5rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem",
   },
   cardTitulo: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontWeight: 700,
-    fontSize: '1rem',
+    fontSize: "1rem",
     margin: 0,
   },
   input: {
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #2A2A2A',
-    backgroundColor: '#0D0D0D',
-    color: '#FFFFFF',
-    fontSize: '1rem',
-    outline: 'none',
-    width: '100%',
-    boxSizing: 'border-box',
+    padding: "0.75rem 1rem",
+    borderRadius: "8px",
+    border: "1px solid #2A2A2A",
+    backgroundColor: "#0D0D0D",
+    color: "#FFFFFF",
+    fontSize: "1rem",
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
   },
   botaoCriar: {
-    padding: '0.85rem',
-    backgroundColor: '#9BFF97',
-    color: '#000',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
+    padding: "0.85rem",
+    backgroundColor: "#9BFF97",
+    color: "#000",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "1rem",
     fontWeight: 700,
-    cursor: 'pointer',
+    cursor: "pointer",
   },
   botaoCancelar: {
-    padding: '0.85rem',
-    backgroundColor: 'transparent',
-    color: '#FFFFFF',
-    border: '1px solid #2A2A2A',
-    borderRadius: '8px',
-    fontSize: '1rem',
+    padding: "0.85rem",
+    backgroundColor: "transparent",
+    color: "#FFFFFF",
+    border: "1px solid #2A2A2A",
+    borderRadius: "8px",
+    fontSize: "1rem",
     fontWeight: 600,
-    cursor: 'pointer',
+    cursor: "pointer",
   },
 };

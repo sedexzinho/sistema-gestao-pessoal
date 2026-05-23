@@ -6,6 +6,9 @@ import { Registro } from "./pages/Registro";
 import { Dashboard } from "./pages/Dashboard";
 import { NovaCategoria } from "./pages/NovaCategoria";
 import { NovaDespesa } from "./pages/NovaDespesa";
+import { Despesas } from "./pages/Despesas";
+import { Receitas } from "./pages/Receitas";
+import { NovaReceita } from "./pages/NovaReceita";
 
 function App() {
   return (
@@ -39,6 +42,14 @@ function App() {
             }
           />
           <Route
+            path="/receitas/nova"
+            element={
+              <PrivateRoute>
+                <NovaReceita />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/despesas/nova"
             element={
               <PrivateRoute>
@@ -46,6 +57,23 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/despesas"
+            element={
+              <PrivateRoute>
+                <Despesas />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/receitas"
+            element={
+              <PrivateRoute>
+                <Receitas />
+              </PrivateRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

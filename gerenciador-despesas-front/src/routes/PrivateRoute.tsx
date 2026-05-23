@@ -6,7 +6,12 @@ interface Props {
 }
 
 export function PrivateRoute({ children }: Props) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // ✅ Aguarda o contexto hidratar antes de decidir
+  if (isLoading) {
+    return null; // ou <div>Carregando...</div>
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

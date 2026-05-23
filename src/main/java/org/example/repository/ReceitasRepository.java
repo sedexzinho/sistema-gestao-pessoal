@@ -18,4 +18,5 @@ public interface ReceitasRepository extends JpaRepository<Receitas, Long> {
 
     // para o cálculo de saldo — todas as receitas recebidas de um usuário
     List<Receitas> findByUsuarioReceitaIdAndStatusReceita(Long usuarioId, String statusReceita);
+    List<Receitas> findByUsuarioReceitaId(Long usuarioId);
 }
